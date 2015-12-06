@@ -1,0 +1,60 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+    <!-- taken from: http://codepen.io/philhoyt/pen/ujHzd-->
+    <nav id="primary_nav_wrap">
+        <ul>
+            <li class="logo"><a href="#/">OPTIMUS</a></li>
+            <li><a href="#">Mode</a>
+                <ul>
+                    <li><a href="#/edit">Edit</a></li>
+                    <li><a href="#/ready">Ready</a></li>
+                </ul>
+            </li>
+            <li><a href="#/about">About</a></li>
+            <li><a href="#/help">Help</a></li>
+        </ul>
+    </nav>
+    <div style="clear: both"></div>
+    <hr />
+    <div class="views welcome">Welcome</div>
+
+    <div class="views about">
+        <h3 class="title">About</h3>
+        <p>
+            OPTIMUS is an open source transformation tool using <a href="https://unopi.co">unopico</a> API. The tool
+            leverages Web Workers and other techniques to enable parsing of large files (up to several hundred megabytes).
+            This tool is free to use and pull requests are welcome here:
+            <a href="https://github.com/hyusetiawan/optimus">OPTIMUS</a>
+        </p>
+        <p>
+            None of the data touches the server, all of the processing is done on your own browser.
+        </p>
+
+    </div>
+
+    <div class="views help">
+
+        <h4 class="title">Users</h4>
+        <p>
+            Drag and drop the file or files, you would like to process.
+        </p>
+
+        <br />
+
+        <h4 class="title">Developers</h4>
+        <p>
+            Go to <b>Mode > Edit</b> to create the transformation logic. There are tooltips sprinkled all over the Edit mode to guide
+            you through the process and what it is capable of.
+        </p>
+
+    </div>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/path.js/0.8.4/path.min.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 body {
     font-family: Helvetica, Arial, Sans-Serif;
     visibility: hidden;
+    height: 100%;
 }
 .dev-form {
     display: inline-block;
@@ -72,6 +73,62 @@ body {
     z-index: -1000;
     position: absolute;
     left: -1000px;
+}
+/* ------------------------------------------------------------------------------------------------------------*/
+.views.ready {
+    width: 100%;
+    height: 100%;
+}
+#file-list {
+    width: 50%;
+    border-collapse: collapse;
+    border: 2px solid #dddddd;
+}
+#file-list thead tr th{
+    padding: 8px;
+    background: #dddddd;
+}
+
+#file-list tbody td:first-child {
+    text-align: left;
+    padding-left: 8px;
+}
+
+#file-list tbody td {
+    text-align: center;
+    padding: 8px;
+}
+#file-list tbody tr:nth-child(even) {
+    background: #F5F5F5;
+}
+
+#file-list, .upload-info { display: none;}
+
+.file-over {
+    position: relative;
+}
+.upload-file .menu {
+    visibility: hidden;
+    margin-bottom: 10px;
+}
+
+#file-info {
+    text-align: center;
+    display: block;
+    border: 2px solid gray;
+    border-radius: 8px;
+    padding: 10px;
+    width: 40%;
+    margin: 0 auto;
+}
+#file-info:hover {
+    background: gray;
+    color: white;
+    cursor: pointer;
+}
+
+#file-input {
+    visibility: hidden;
 }
 /*-------------------------------------------------------------------------------------------------------------*/
 .subviews.output table {

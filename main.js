@@ -1,8 +1,72 @@
-var saveState = function(){
+var saveState = function saveState(){
 
 }
-var runTransform = function(){
+var runTransform = function runTransform(){
 
+}
+
+var setupUpload = function setupUpload(){
+    var $viewReady = $('.views.ready')
+    var $fileInfo = $('#file-info')
+    var dropMessage = 'DDDROP THE FILES!'
+    var originalTxt = $fileInfo.text()
+    var $uploadMenu = $('.upload-file > .menu')
+    var $fileList = $('#file-list')
+    var files = null
+    var byteCount = function byteCount (bytes, unit) {
+        if (bytes < (unit = unit || 1000))
+            return bytes + " B";
+        var exp = Math.floor (Math.log (bytes) / Math.log (unit));
+        var pre = ' ' +(unit === 1000 ? "kMGTPE" : "KMGTPE").charAt (exp - 1) + (unit === 1000 ? "" : "i") + 'B';
+        return (bytes / Math.pow (unit, exp)).toFixed (1) + pre;
+    }
+    $(document).on('click', '.clear-files', function(){
+        files = null
+        $fileInfo.text(originalTxt).show()
+        $uploadMenu.css('visibility', 'hidden')
+        $fileList.hide()
+    })
+
+    $(document).on('click', '.process-button', function(){
+
+    })
+
+    var setFiles = function setFiles(uploadedFiles){
+        files = uploadedFiles
+        $uploadMenu.css('visibility', 'visible')
+        $fileInfo.hide()
+        $fileList.show()
+        var tmpls = []
+        for(var i = 0; i < files.length; i++){
+            var file = files[i]
+            console.log(file)
+            tmpls.push(`
+                <tr>
+                    <td>${file.name}</td>
+                    <td>${byteCount(file.size)}</td>
+                    <td>
+                        <input data-idx="${i}" class="process-button" type="button" value="PROCESS" />
+                    </td>
+                </tr>
+            `)
+        }
+        $fileList.children('tbody').html(tmpls.join(' '))
+    }
+    
+    setFiles([{name: 'first.json', size: 130}, {name: 'second.json', size: 4400}])
+    $viewReady.on('dragenter', function(e){
+        $fileInfo.text(dropMessage)
+        e.preventDefault()
+    }).on('dragover', function(e){
+        e.preventDefault()
+    }).on('dragleave', function(){
+        $fileInfo.text(originalTxt)
+    }).on('drop', function(e){
+        e.stopPropagation();
+        e.preventDefault();
+        var files = e.originalEvent.dataTransfer.files
+        setFiles(files)
+    })
 }
 
 var setupFileSaver = function(){
@@ -172,6 +236,63 @@ var setupFileSaver = function(){
     }
 }
 
+var setupRouting = function setupRouting(){
+    var selectedClass = 'current-menu-item'
+    var onEnter = function onEnter(){
+        var view = window.location.hash.split('#')[1].split('/')
+        var mainView = view[1]
+        var subView = view[2]
+        //console.log('VIEW: ', mainView, subView)
+        $('.page-level .' + selectedClass).removeClass(selectedClass)
+        $('.page-level a[href="#/'+mainView+'"]').closest('li').addClass(selectedClass)
+
+        var shownView = $('.views').addClass('invisible').filter('.' + mainView).removeClass('invisible')
+        var showURL = window.location.hash
+        if(!subView){
+            subView = shownView.find('.primary_nav_wrap li:first-child a').attr('href')
+            showURL = subView
+            if (subView) subView = subView.split('/').pop()
+
+        }
+        shownView.children('.subviews').addClass('invisible').filter('.' + subView).removeClass('invisible')
+        shownView.find('.' + selectedClass).removeClass(selectedClass)
+        shownView.find('a[href="'+showURL+'"]').closest('li').addClass(selectedClass)
+        $(document.body).css('visibility', 'visible')
+    }
+
+
+    Path.map("#/edit(/:sub)").to(function(){
+        switch(this.params['sub']){
+            case 'logic':
+
+                break
+        }
+    }).enter(onEnter)
+
+    Path.map("#/ready").to(function(){
+        console.log('welcome to ready')
+    }).enter(onEnter)
+
+    Path.map("#/welcome").to(function(){
+        console.log('welcome to welcome')
+    }).enter(onEnter)
+
+    Path.map("#/about").to(function(){
+        console.log('welcome to about')
+    }).enter(onEnter)
+
+    Path.map("#/help").to(function(){
+        console.log('welcome to help')
+    }).enter(onEnter)
+
+    Path.root('#/about')
+    $('[title]').tooltipster({
+        theme: 'tooltipster-light',
+        contentAsHTML: true,
+        delay: 300
+    });
+    Path.listen()
+}
 var setupEditor = function(){
     var editor = CodeMirror.fromTextArea(document.getElementById('transformer'), {
         lineNumbers: true,
@@ -210,63 +331,12 @@ var setupEditor = function(){
     editor.addKeyMap(map);
     return editor
 }
+
 $(document).ready(function(){
     UnoPico.ready(function($statev1){
-        var selectedClass = 'current-menu-item'
-        var onEnter = function onEnter(){
-            var view = window.location.hash.split('#')[1].split('/')
-            var mainView = view[1]
-            var subView = view[2]
-            //console.log('VIEW: ', mainView, subView)
-            $('.page-level .' + selectedClass).removeClass(selectedClass)
-            $('.page-level a[href="#/'+mainView+'"]').closest('li').addClass(selectedClass)
-
-            var shownView = $('.views').addClass('invisible').filter('.' + mainView).removeClass('invisible')
-            var showURL = window.location.hash
-            if(!subView){
-                subView = shownView.find('.primary_nav_wrap li:first-child a').attr('href')
-                showURL = subView
-                if (subView) subView = subView.split('/').pop()
-
-            }
-            shownView.children('.subviews').addClass('invisible').filter('.' + subView).removeClass('invisible')
-            shownView.find('.' + selectedClass).removeClass(selectedClass)
-            shownView.find('a[href="'+showURL+'"]').closest('li').addClass(selectedClass)
-            $(document.body).css('visibility', 'visible')
-        }
-
-        var editor = setupEditor()
         setupFileSaver()
-        Path.map("#/edit(/:sub)").to(function(){
-            switch(this.params['sub']){
-                case 'logic':
-
-                    break
-            }
-        }).enter(onEnter)
-
-        Path.map("#/ready").to(function(){
-            console.log('welcome to ready')
-        }).enter(onEnter)
-
-        Path.map("#/welcome").to(function(){
-            console.log('welcome to welcome')
-        }).enter(onEnter)
-
-        Path.map("#/about").to(function(){
-            console.log('welcome to about')
-        }).enter(onEnter)
-
-        Path.map("#/help").to(function(){
-            console.log('welcome to help')
-        }).enter(onEnter)
-
-        Path.root('#/about')
-        $('[title]').tooltipster({
-            theme: 'tooltipster-light',
-            contentAsHTML: true,
-            delay: 300
-        });
-        Path.listen()
+        setupEditor()
+        setupUpload()
+        setupRouting()
     })
 })

@@ -27,7 +27,27 @@
     <div class="cleared"></div>
     <hr />
     <div class="views welcome">Welcome</div>
+    <div class="views ready">
+        <form class="upload-file">
+            <div class="menu">
+                <input class="clear-files" type="button" value="CLEAR FILES" />
+                <input class="process-all" type="button" value="PROCESS ALL" />
+            </div>
+            <table id="file-list" border="0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Process</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <input id="file-input" type="file" />
+            <label id="file-info"  for="file-input">Click to Upload Files or Drag and Drop Files</label>
+        </form>
 
+    </div>
     <div class="views edit">
         <nav class="sub-level primary_nav_wrap">
             <ul >
@@ -190,11 +210,11 @@
         </p>
 
     </div>
-
+    <script type="text/javascript" src="https://unopi.co/static/unopico.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/js/jquery.tooltipster.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/path.js/0.8.4/path.min.js"></script>
-    <script type="text/javascript" src="https://unopi.co/static/unopico.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>

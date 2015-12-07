@@ -51,7 +51,7 @@
     <div class="views edit">
         <nav class="sub-level primary_nav_wrap">
             <ul >
-                <li><a href="#/edit/logic">Logic</a></li>
+                <li><a href="#/edit/transformer">Transformer</a></li>
                 <li><a href="#/edit/output">Output</a></li>
             </ul>
             <form class="dev-form">
@@ -62,16 +62,19 @@
 
         <div class="cleared"></div>
         <br />
-        <div class="subviews logic">
+        <div class="subviews transformer">
             <div class="padded">
                 <div class="auto-parse">
                     <b>Auto Parse:</b>
-                    <select title="Automatically parses the file, which content, then passed to transformer(file) as $data">
-                        <option value=""> - </option>
+                    <select id="auto" title="Automatically parses the file, which content, then passed to transformer(file) as $data">
+                        <option value="auto">AUTO</option>
                         <option value="json">JSON</option>
                         <option value="csv">CSV</option>
                         <option value="nl">New Line</option>
-                        <option value="txt">TXT</option>
+                        <option value="readAsText">AsText</option>
+                        <option value="readAsDataURL">AsDataURL</option>
+                        <option value="readAsBinaryString">asBinaryString</option>
+                        <option value="readAsArrayBuffer">asArrayBuffer</option>
                     </select>
                 </div>
 
@@ -140,6 +143,7 @@
 
   for (var i = 0; i < $data.length; i++){
     //do some transformation
+    $data[i].name = $data[i].name.toUpperCase()
   }
 
   return $data // return the result
@@ -151,11 +155,13 @@
                     <tr>
                         <td class="input-label">Content Type</td>
                         <td>
-                            <select id="content-type">
-                                <option value="txt">TXT</option>
+                            <select id="content-type" name="content-type">
+                                <option value=""> - </option>
+                                <option value="original">ORIGINAL</option>
                                 <option value="json">JSON</option>
                                 <option value="csv">CSV</option>
                                 <option value="nl">New Line</option>
+                                <option value="txt">TXT</option>
                             </select>
                         </td>
                     </tr>
@@ -168,7 +174,7 @@
                     <tr>
                         <td class="input-label">Filename Pattern</td>
                         <td style="">
-                            <input id="filename-pattern" type="text" name="tags" placeholder="" class="tags-input"/>
+                            <input id="filename-pattern" type="text" name="tags" placeholder="" class="tags-input" value="$original"/>
                             <input id="select-tag" type="text" name="tags" placeholder="Tags" class="tags-input"
                                    value="$timestamp, $original, $counter, $uuid" />
                         </td>
@@ -210,6 +216,77 @@
         </p>
 
     </div>
+    <script id="worker" type="text/javascript">
+        {{transformer}}
+
+
+        self.onmessage = function(e){
+            var data = e.data
+
+            switch(data.cmd){
+                case 'run':
+                    var file = data.file
+                    var options = data.options
+                    var $data = null;
+                    var runTransformer = function runTransformer(){
+                        var result = transformer(file, $data)
+
+                        if(Array.isArray(result)){
+                            //http://developerblog.redhat.com/2014/05/20/communicating-large-objects-with-web-workers-in-javascript/
+                            //do progress so it wont crash
+                            var total = result.length
+                            for(var i = 0; i < total; i++){
+                                postMessage({
+                                    cmd: 'step',
+                                    data: result[i],
+                                    step: i + 1,
+                                    total: total
+                                })
+                            }
+                        } else {
+                            postMessage({
+                                cmd: 'done',
+                                data: result
+                            })
+                        }
+                    }
+
+
+                    if (options.auto) {
+                        var reader = new FileReader()
+                        reader.onload = function(){
+                            var auto = options.auto
+                            if(auto == 'auto'){
+                                if(file.type.indexOf('json') >= 0) auto = 'json'
+                                else if (file.type.indexOf('csv') >= 0) auto = 'csv'
+                                else auto = 'txt'
+                            }
+
+                            switch(auto){
+                                case 'json':
+                                    $data = JSON.parse(reader.result)
+                                    break
+                                case 'csv':
+                                    importScripts(['https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js'])
+                                    $data = Papa.parse(reader.result)
+                                    break
+                                default:
+                                    $data = reader.result
+                                    break
+                            }
+                            runTransformer()
+                        }
+                        if(reader[options.auto])reader[options.auto](file)
+                        else reader.readAsText(file)
+
+                    }
+
+                    break;
+
+            }
+        }
+    </script>
+
     <script type="text/javascript" src="https://unopi.co/static/unopico.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/js/jquery.tooltipster.min.js"></script>
@@ -223,7 +300,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/matchtags.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/closetag.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/mode/javascript/javascript.min.js"></script>
-
+    <script type="text/javascript" src="setup_upload.js"></script>
+    <script type="text/javascript" src="setup_file_saver.js"></script>
     <script type="text/javascript" src="main.js"></script>
 </body>
 </html>

@@ -21,6 +21,9 @@ var setupUpload = function setupUpload(filesaver, transformer){
         $uploadMenu.css('visibility', 'hidden')
         $fileList.hide()
     })
+    $(document).on('click', '.process-all', function(){
+        $('.process-button').click()
+    })
 
     var progressSettings = {
         color: '#FCB03C',

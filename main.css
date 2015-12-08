@@ -79,6 +79,9 @@ body {
     width: 100%;
     height: 100%;
 }
+input.download {
+    color: #61BA43;
+}
 #file-list {
     width: 50%;
     border-collapse: collapse;
@@ -97,7 +100,14 @@ body {
 #file-list tbody td {
     text-align: center;
     padding: 8px;
+    min-width: 128px;
 }
+
+#file-list .progress {
+    width: 128px;
+    display: inline-block;
+}
+
 #file-list tbody tr:nth-child(even) {
     background: #F5F5F5;
 }

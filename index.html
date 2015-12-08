@@ -130,20 +130,25 @@
                 </label>
             </div>
 
-            <textarea id="transformer">function transformer(file, $data){
+            <textarea id="transformer">function transformer(file, send, $data){
   /**
     @file   instance of File
+    @send   function to send the result: send(result) to send the whole processed data, send(item, index, total) to indicate progress
+            Use send with the counter, if the file is a large array, this will also activate progress indicator and is zero-based index
+            If the file is small (under 100mb), you can send the whole processed data safely.
     @$data  parsed data, null if you didn't choose the auto parse
+
   */
 
   var scripts = [
     'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'
   ]
   importScripts.apply(null, scripts) // if you would like to use other libraries
-
-  for (var i = 0; i < $data.length; i++){
+  var total = $data.length
+  for (var i = 0; i < total; i++){
     //do some transformation
     $data[i].name = $data[i].name.toUpperCase()
+    send($data[i], i, total)
   }
 
   return $data // return the result
@@ -156,11 +161,9 @@
                         <td class="input-label">Content Type</td>
                         <td>
                             <select id="content-type" name="content-type">
-                                <option value=""> - </option>
                                 <option value="original">ORIGINAL</option>
                                 <option value="json">JSON</option>
                                 <option value="csv">CSV</option>
-                                <option value="nl">New Line</option>
                                 <option value="txt">TXT</option>
                             </select>
                         </td>
@@ -218,7 +221,14 @@
     </div>
     <script id="worker" type="text/javascript">
         {{transformer}}
-
+        var send = function send(){
+            if(arguments.length == 1){
+                postMessage({cmd: 'done', data: arguments[0]})
+            } else {
+                //http://developerblog.redhat.com/2014/05/20/communicating-large-objects-with-web-workers-in-javascript/
+                postMessage({cmd: 'step', data: arguments[0], step: arguments[1], total: arguments[2]})
+            }
+        }
 
         self.onmessage = function(e){
             var data = e.data
@@ -228,31 +238,9 @@
                     var file = data.file
                     var options = data.options
                     var $data = null;
-                    var runTransformer = function runTransformer(){
-                        var result = transformer(file, $data)
-
-                        if(Array.isArray(result)){
-                            //http://developerblog.redhat.com/2014/05/20/communicating-large-objects-with-web-workers-in-javascript/
-                            //do progress so it wont crash
-                            var total = result.length
-                            for(var i = 0; i < total; i++){
-                                postMessage({
-                                    cmd: 'step',
-                                    data: result[i],
-                                    step: i + 1,
-                                    total: total
-                                })
-                            }
-                        } else {
-                            postMessage({
-                                cmd: 'done',
-                                data: result
-                            })
-                        }
-                    }
-
 
                     if (options.auto) {
+                        postMessage({cmd: 'info', msg: 'Reading Data'})
                         var reader = new FileReader()
                         reader.onload = function(){
                             var auto = options.auto
@@ -274,7 +262,7 @@
                                     $data = reader.result
                                     break
                             }
-                            runTransformer()
+                            transformer(file, send, $data)
                         }
                         if(reader[options.auto])reader[options.auto](file)
                         else reader.readAsText(file)
@@ -291,7 +279,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/js/jquery.tooltipster.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/path.js/0.8.4/path.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/0.9.0/progressbar.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>

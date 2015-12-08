@@ -51,9 +51,12 @@ var setupFileSaver = function(){
     var generateTimestamp = function(){ return Math.floor(Date.now() / 1000)}
     var generateCounter = function(){ return String(counter++)}
 
-    var generateFilename = function(){
+    var generateFilename = function(file){
         var patterns = $filenamePattern.val().split(',')
         var filename = []
+        var ext = $contentType.val()
+        if (ext == 'original') ext = getFileType(file)
+
         for(var i = 0; i < patterns.length; i++){
             var fragment = null;
             switch(patterns[i]){
@@ -67,12 +70,12 @@ var setupFileSaver = function(){
                     fragment = generateCounter()
                     break
                 case '$original':
-                    fragment = inputFilename
+                    fragment = file.name.split('.').slice(0, -1).join('.')
                     break
             }
             if(fragment) filename.push(fragment)
         }
-        return filename.join('-') + '.' + $contentType.val()
+        return filename.join('-') + '.' + ext
     }
 
     var toCsvValue = function toCsvValue(theValue, sDelimiter) {
@@ -142,28 +145,10 @@ var setupFileSaver = function(){
         nl: {type: 'text/plain' + charset},
         csv: {type: 'text/csv' + charset}
     }
-
-    var saveFile  = function(){
-        var filename = generateFilename()
-        var type = null
-        var result = null
-        if (content instanceof Blob){
-            result = content
-        } else {
-            switch($contentType.val()){
-                case 'json':
-                    result = JSON.stringify(content, null, 4)
-                    break
-                case 'txt':
-                    result = String(content)
-                    break
-                case 'csv':
-                    result = toCSV(content)
-                    break
-            }
-        }
-        saveAs(new Blob([result], charsets[$contentType.val()]), filename)
+    var getFileType = function(file){
+        return file.type.split('/').pop()
     }
+
     return {
         capture: function(){
             return {
@@ -172,8 +157,35 @@ var setupFileSaver = function(){
                 content: $contentType.val()
             }
         },
-        generateFilename: function(file){
+        saveFile: function(file, content){
+            var charset = ';charset=' + document.characterSet
+            var charsets = {
+                json: {type: 'application/json' + charset},
+                txt: {type: 'text/plain' + charset},
+                csv: {type: 'text/csv' + charset}
+            }
 
+            var filename = generateFilename(file)
+            var result = null
+            if (content instanceof Blob){
+                result = content
+            } else {
+                var contentType = $contentType.val()
+                if(contentType == 'original') contentType = getFileType(file)
+                switch(contentType){
+                    case 'json':
+                        result = JSON.stringify(content, null, 4)
+                        break
+                    case 'txt':
+                        result = String(content)
+                        break
+                    case 'csv':
+                        result = toCSV(content)
+                        break
+                }
+            }
+
+            saveAs(new Blob([result], charsets[$contentType.val()]), filename)
         }
     }
 }

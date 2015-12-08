@@ -70,7 +70,6 @@
                         <option value="auto">AUTO</option>
                         <option value="json">JSON</option>
                         <option value="csv">CSV</option>
-                        <option value="nl">New Line</option>
                         <option value="readAsText">AsText</option>
                         <option value="readAsDataURL">AsDataURL</option>
                         <option value="readAsBinaryString">asBinaryString</option>
@@ -256,7 +255,7 @@
                                     break
                                 case 'csv':
                                     importScripts(['https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js'])
-                                    $data = Papa.parse(reader.result)
+                                    $data = Papa.parse(reader.result).data
                                     break
                                 default:
                                     $data = reader.result

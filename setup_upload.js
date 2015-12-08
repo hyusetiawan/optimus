@@ -101,7 +101,7 @@ var setupUpload = function setupUpload(filesaver, transformer){
         var tmpls = []
         for(var i = 0; i < files.length; i++){
             var file = files[i]
-            console.log('FILE: ', file)
+            //console.log('FILE: ', file)
             tmpls.push(`
                 <tr id="file-${i}">
                     <td>${file.name}</td>

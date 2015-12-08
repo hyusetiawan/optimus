@@ -39,19 +39,19 @@ var setupRouting = function setupRouting(){
     }).enter(onEnter)
 
     Path.map("#/ready").to(function(){
-        console.log('welcome to ready')
+        //console.log('welcome to ready')
     }).enter(onEnter)
 
     Path.map("#/welcome").to(function(){
-        console.log('welcome to welcome')
+        //console.log('welcome to welcome')
     }).enter(onEnter)
 
     Path.map("#/about").to(function(){
-        console.log('welcome to about')
+        //console.log('welcome to about')
     }).enter(onEnter)
 
     Path.map("#/help").to(function(){
-        console.log('welcome to help')
+        //console.log('welcome to help')
     }).enter(onEnter)
 
     Path.root('#/about')

@@ -82,6 +82,9 @@ body {
 input.download {
     color: #61BA43;
 }
+.CodeMirror {
+    height: 100%;
+}
 #file-list {
     width: 50%;
     border-collapse: collapse;
@@ -141,6 +144,19 @@ input.download {
     visibility: hidden;
 }
 /*-------------------------------------------------------------------------------------------------------------*/
+#welcome-message {
+    border: 2px solid gray;
+    margin: 0 auto;
+    padding: 0px 8px;
+    border-radius: 8px;
+    width: 50%;
+}
+
+#welcome-message-input {
+    width: 50%;
+    min-height: 200px;
+}
+
 .subviews.output table {
     width: 70%;
 }

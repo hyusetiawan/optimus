@@ -1,4 +1,5 @@
-var setupUpload = function setupUpload(filesaver, transformer){
+var setupUpload = function setupUpload(filesaver, transformer, $state){
+
     var $viewReady = $('.views.ready')
     var $fileInfo = $('#file-info')
     var dropMessage = 'DDDROP THE FILES!'
@@ -6,6 +7,16 @@ var setupUpload = function setupUpload(filesaver, transformer){
     var $uploadMenu = $('.upload-file > .menu')
     var $fileList = $('#file-list')
     var files = null
+    var $welcomeMessage = $('#welcome-message')
+    var ALLOWED_TAGS  = [ 'p', 'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul']
+    var setWelcomeMessage = function setWelcomeMessage(msg){
+        msg = DOMPurify.sanitize(markdown.toHTML(msg), ALLOWED_TAGS)
+        $welcomeMessage.html(msg)
+        if (!$welcomeMessage.text().trim()){
+            $welcomeMessage.addClass('invisible')
+            return
+        } else $welcomeMessage.removeClass('invisible')
+    }
 
     var byteCount = function byteCount (bytes, unit) {
         if (bytes < (unit = unit || 1000))
@@ -22,7 +33,7 @@ var setupUpload = function setupUpload(filesaver, transformer){
         $fileList.hide()
     })
     $(document).on('click', '.process-all', function(){
-        $('.process-button').click()
+        $('.process-button').click() //click all that can be clicked
     })
 
     var progressSettings = {
@@ -36,8 +47,7 @@ var setupUpload = function setupUpload(filesaver, transformer){
         }
     }
 
-    $(document).on('click', '.process-button', function(){
-        var idx = $(this).data('idx')
+    var processFile = function(idx){
         var file = files[idx]
         var result = []
         var transformerState = transformer.capture()
@@ -89,12 +99,19 @@ var setupUpload = function setupUpload(filesaver, transformer){
         worker.postMessage({cmd: 'run', file: file, options: {
             auto: transformerState.auto
         }})
+    }
+
+    $(document).on('click', '.process-button', function(){
+        var idx = $(this).data('idx')
+        PubSub.publish('file.process', idx)
     })
+
     var createProcessButton = function(idx){
         return `<input data-idx="${idx}" class="process-button" type="button" value="PROCESS" />`
     }
     var setFiles = function setFiles(uploadedFiles){
         files = uploadedFiles
+        PubSub.publish('files.set', files)
         $uploadMenu.css('visibility', 'visible')
         $fileInfo.hide()
         $fileList.show()
@@ -129,4 +146,14 @@ var setupUpload = function setupUpload(filesaver, transformer){
         var files = e.originalEvent.dataTransfer.files
         setFiles(files)
     })
+
+    PubSub.subscribe('file.process', function(path, idx){
+        processFile(idx)
+    })
+
+    PubSub.subscribe('file.welcome', function(path, welcomeMessage){
+        setWelcomeMessage(welcomeMessage)
+    })
+
+    setWelcomeMessage($state.get('transformer.welcome', null))
 }

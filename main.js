@@ -1,12 +1,3 @@
-var saveState = function saveState(){
-
-}
-var runTransform = function runTransform(){
-
-}
-
-
-
 var setupRouting = function setupRouting(){
     var selectedClass = 'current-menu-item'
     var onEnter = function onEnter(){
@@ -62,7 +53,10 @@ var setupRouting = function setupRouting(){
     });
     Path.listen()
 }
-var setupTransformer = function(state){
+var setupTransformer = function($state){
+    var themes = ["default", "3024-day", "3024-night", "abcdef", "ambiance", "base16-dark", "base16-light", "bespin", "blackboard", "cobalt", "colorforth", "dracula", "eclipse", "elegant", "erlang-dark", "hopscotch", "icecoder", "isotope", "lesser-dark", "liquibyte", "material", "mbo", "mdn-like", "midnight", "monokai", "neat", "neo", "night", "paraiso-dark", "paraiso-light", "pastel-on-dark", "railscasts", "rubyblue", "seti", "solarized", "the-matrix", "tomorrow-night-bright", "tomorrow-night-eighties", "ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "zenburn"]
+    for(var i = 0; i < themes.length; i++) themes[i] = `<option value="${themes[i]}">${themes[i]}</option>`
+
     var editor = CodeMirror.fromTextArea(document.getElementById('transformer'), {
         lineNumbers: true,
         //theme: 'monokai',
@@ -76,7 +70,11 @@ var setupTransformer = function(state){
     })
     var baseURLTheme = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/theme/'
     var $theme = $('#theme')
-
+    $theme.html(themes.join('\n'))
+    var $devFileList = $('#dev-file-list')
+    var welcomeMessage = null
+    var $auto = $('#auto')
+    var $welcomeMessageInput = $('#welcome-message-input')
     var setTheme = function(theme){
         theme = theme.trim()
         $('<link href="'+(baseURLTheme+theme+'.min.css')+'" rel="stylesheet" type="text/css" />').appendTo(document.head)
@@ -84,8 +82,12 @@ var setupTransformer = function(state){
         editor.setOption('theme', theme)
     }
     $theme.change(function(){
-        var theme = $(this).children("option").filter(":selected").text()
-        setTheme(theme)
+        setTheme($(this).val())
+    })
+
+    $welcomeMessageInput.change(function(){
+        welcomeMessage = $(this).val()
+        PubSub.publish('file.welcome', welcomeMessage)
     })
 
     setTheme('monokai')
@@ -95,17 +97,50 @@ var setupTransformer = function(state){
     var saveHotkey = hotkeyStart + 'S'
     $('.save-button').attr('title', $('.save-button').attr('title').replace('<hotkey>', saveHotkey))
     $('.run-button').attr('title', $('.run-button').attr('title').replace('<hotkey>', runHotkey))
-
+    var runTransform = function(idx){PubSub.publish('transformer.run', idx)}
+    var saveState = function(){PubSub.publish('state.save')}
     map[runHotkey] = runTransform
     map[hotkeyStart + 'S'] = saveState
     editor.addKeyMap(map)
+
+    $(document).on('click','.save-button', function(e){
+        PubSub.publish('state.save')
+    })
+
+    $(document).on('click','.run-button', function(e){
+        runTransform($devFileList.val())
+    })
+
+    PubSub.subscribe('files.set', function(path, files){
+        var options = []
+        for(var i = 0; i < files.length; i++){
+            var file = files[i]
+            options.push(`<option value="${i}">${file.name}</option>`)
+        }
+        $devFileList.html(options.join(''))
+    })
+
+    PubSub.subscribe('transformer.run', function(path, idx){
+        if(!idx){
+            alert('Please select a file, and if you have not, also drop some files in Mode > Ready')
+            return
+        }
+
+    })
+
+    var transformerState = $state.get('transformer', {})
+    if(transformerState.transformer) editor.setValue(transformerState.transformer)
+    $auto.val(transformerState.auto?transformerState.auto:'')
+    $theme.val(transformerState.theme?transformerState.theme: 'monokai')
+    $welcomeMessageInput.val(transformerState.welcome)
 
     return {
         capture: function(){
             return {
                 transformer: editor.getValue(),
-                auto: $('#auto').val(),
-                theme: $theme.children("option").filter(":selected").text()
+                auto: $auto.val(),
+                theme: $theme.val(),
+                welcome: welcomeMessage
             }
         }
     }
@@ -113,10 +148,17 @@ var setupTransformer = function(state){
 
 $(document).ready(function(){
     UnoPico.ready(function($statev1){
-        var filesaver = setupFileSaver()
-        var transformer = setupTransformer()
-
-        setupUpload(filesaver, transformer)
+        var filesaver = setupFileSaver($statev1)
+        var transformer = setupTransformer($statev1)
+        setupUpload(filesaver, transformer, $statev1)
         setupRouting()
+
+        PubSub.subscribe('state.save', function(){
+            $statev1.set({
+                transformer: transformer.capture(),
+                filesaver: filesaver.capture()
+            })
+        })
+
     })
 })

@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/themes/tooltipster-light.min.css" rel="stylesheet" type='text/css' />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.css" type="text/css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="main.css">
+    <title>OPTIMUS</title>
 </head>
 
 <body>
@@ -48,26 +49,36 @@
             <label id="file-info"  for="file-input">Click to Upload Files or Drag and Drop Files</label>
         </form>
 
+        <div id="welcome-message"></div>
+
     </div>
     <div class="views edit">
         <nav class="sub-level primary_nav_wrap">
             <ul >
                 <li><a href="#/edit/transformer">Transformer</a></li>
                 <li><a href="#/edit/output">Output</a></li>
+                <li><a href="#/edit/extras">Extras</a></li>
             </ul>
             <form class="dev-form">
                 <input title="saves the app <br />hotkey: <hotkey>" class="save-button" type="button" value="SAVE" />
-                <input title="runs the app against the uploaded file (Mode > Ready) <br />hotkey: <hotkey>" class="run-button" type="button" value="RUN">
+                <input title="runs the app against the selected file to the dropdown <br />hotkey: <hotkey>" class="run-button" type="button" value="RUN">
+                <select title="Drop some files in Mode > Ready, they will be available here to test your transformation logic against for debugging purposes" id="dev-file-list"><option> - </option></select>
             </form>
         </nav>
 
         <div class="cleared"></div>
         <br />
+        <div class="subviews extras">
+            <textarea id="welcome-message-input" placeholder="write a welcome message that will be shown at Mode > Ready for people who will use the transformer, clearly explaining what your transformer does will go a long way. Supports Markdown."></textarea>
+        </div>
         <div class="subviews transformer">
             <div class="padded">
                 <div class="auto-parse">
                     <b>Auto Parse:</b>
-                    <select id="auto" title="Automatically parses the file, which content, then passed to transformer(file) as $data">
+                    <select id="auto" title="A convenience method before calling transformer to automatically parses the content of the  file <br />
+                                            and pass it to transformer() as $data parameter so you can focus on transforming the data not parsing<br />
+                                             AUTO: detects csv/json">
+                        <option> - </option>
                         <option value="auto">AUTO</option>
                         <option value="json">JSON</option>
                         <option value="csv">CSV</option>
@@ -80,64 +91,17 @@
 
                 <label class="editor-theme" title="change the editor's theme">
                     Editor's Theme
-                    <select id="theme">
-                    <option selected>default</option>
-                    <option>3024-day</option>
-                    <option>3024-night</option>
-                    <option>abcdef</option>
-                    <option>ambiance</option>
-                    <option>base16-dark</option>
-                    <option>base16-light</option>
-                    <option>bespin</option>
-                    <option>blackboard</option>
-                    <option>cobalt</option>
-                    <option>colorforth</option>
-                    <option>dracula</option>
-                    <option>eclipse</option>
-                    <option>elegant</option>
-                    <option>erlang-dark</option>
-                    <option>hopscotch</option>
-                    <option>icecoder</option>
-                    <option>isotope</option>
-                    <option>lesser-dark</option>
-                    <option>liquibyte</option>
-                    <option>material</option>
-                    <option>mbo</option>
-                    <option>mdn-like</option>
-                    <option>midnight</option>
-                    <option>monokai</option>
-                    <option>neat</option>
-                    <option>neo</option>
-                    <option>night</option>
-                    <option>paraiso-dark</option>
-                    <option>paraiso-light</option>
-                    <option>pastel-on-dark</option>
-                    <option>railscasts</option>
-                    <option>rubyblue</option>
-                    <option>seti</option>
-                    <option>solarized</option>
-                    <option>the-matrix</option>
-                    <option>tomorrow-night-bright</option>
-                    <option>tomorrow-night-eighties</option>
-                    <option>ttcn</option>
-                    <option>twilight</option>
-                    <option>vibrant-ink</option>
-                    <option>xq-dark</option>
-                    <option>xq-light</option>
-                    <option>yeti</option>
-                    <option>zenburn</option>
-                </select> <br />
+                    <select id="theme"></select> <br />
                 </label>
             </div>
 
             <textarea id="transformer">function transformer(file, send, $data){
   /**
-    @file   instance of File
+    @file   the uploaded file (a File instance)
     @send   function to send the result: send(result) to send the whole processed data, send(item, index, total) to indicate progress
             Use send with the counter, if the file is a large array, this will also activate progress indicator and is zero-based index
             If the file is small (under 100mb), you can send the whole processed data safely.
-    @$data  parsed data, null if you didn't choose the auto parse
-
+    @$data  parsed data, null if you didn't choose the auto parse (see above)
   */
 
   var scripts = [
@@ -147,7 +111,6 @@
   var total = $data.length
   for (var i = 0; i < total; i++){
     //do some transformation
-    $data[i].name = $data[i].name.toUpperCase()
     send($data[i], i, total)
   }
 
@@ -170,11 +133,6 @@
                     </tr>
 
                     <tr>
-                        <td class="input-label"><label for="autosave">Auto Save</label></td>
-                        <td><input id="autosave" type="checkbox" /></td>
-                    </tr>
-
-                    <tr>
                         <td class="input-label">Filename Pattern</td>
                         <td style="">
                             <input id="filename-pattern" type="text" name="tags" placeholder="" class="tags-input" value="$original"/>
@@ -191,8 +149,9 @@
         <h3 class="title">About</h3>
         <p>
             OPTIMUS is an open source transformation tool using <a href="https://unopi.co">unopico</a> API.
-            By leveraging unopico's API, the output options and transformation logic can be shared so developers can write the
-            logic, set the options, persist them for them to be reused or even shared with other people.
+            By leveraging unopico's API, the file transformation logic can be persisted, so developers can write the
+            logic in javascript, and share. This way, other people can upload their own files to run against the persisted
+            transformation logic.
         </p>
 
         <br />
@@ -202,7 +161,7 @@
             This tool is free to use and pull requests are welcomed here:
             <a href="https://github.com/hyusetiawan/optimus">OPTIMUS</a>
             None of the data touches the server, all of the processing is done on your own browser.
-            To start writing, click the <a href="#/edit">Edit Mode</a>
+            For developers, to get started, click the <a href="#/edit">Edit Mode</a>
         </p>
 
     </div>
@@ -270,7 +229,8 @@
                         }
                         if(reader[options.auto])reader[options.auto](file)
                         else reader.readAsText(file)
-
+                    } else {
+                        transformer(file, send, $data)
                     }
 
                     break;
@@ -286,12 +246,18 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/0.9.0/progressbar.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pubsub-js/1.5.3/pubsub.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/markdown.js/0.5.0/markdown.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/0.7.3/purify.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/closebrackets.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/matchbrackets.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/matchtags.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/closetag.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/mode/javascript/javascript.min.js"></script>
+
     <script type="text/javascript" src="setup_upload.js"></script>
     <script type="text/javascript" src="setup_file_saver.js"></script>
     <script type="text/javascript" src="main.js"></script>

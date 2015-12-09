@@ -74,6 +74,29 @@ body {
     position: absolute;
     left: -1000px;
 }
+.mfp-content {
+    text-align: center;
+}
+
+
+/* ------------------------------------------------------------------------------------------------------------*/
+dl dt {
+    font-weight: bold;
+    font-style: italic;
+    margin-bottom: 5px;
+}
+dl dd {
+    margin-bottom: 8px;
+}
+/* ------------------------------------------------------------------------------------------------------------*/
+.subviews.transformer .pill-menu {
+    border: 1px solid black;
+    border-radius: 4px;
+    display: inline-block;
+    padding: 8px 8px;
+    margin-right: 13px;
+
+}
 /* ------------------------------------------------------------------------------------------------------------*/
 .views.ready {
     width: 100%;
@@ -85,37 +108,40 @@ input.download {
 .CodeMirror {
     height: 100%;
 }
-#file-list {
+#result-files-table thead tr th{
+    background: #61BA43;
+}
+.file-list {
     width: 50%;
     border-collapse: collapse;
     border: 2px solid #dddddd;
 }
-#file-list thead tr th{
+.file-list thead tr th{
     padding: 8px;
     background: #dddddd;
 }
 
-#file-list tbody td:first-child {
+.file-list tbody td:first-child {
     text-align: left;
     padding-left: 8px;
 }
 
-#file-list tbody td {
+.file-list tbody td {
     text-align: center;
     padding: 8px;
     min-width: 128px;
 }
 
-#file-list .progress {
+.file-list .progress {
     width: 128px;
     display: inline-block;
 }
 
-#file-list tbody tr:nth-child(even) {
+.file-list tbody tr:nth-child(even) {
     background: #F5F5F5;
 }
 
-#file-list, .upload-info { display: none;}
+.processing-mode { display: none;}
 
 .file-over {
     position: relative;
@@ -155,6 +181,7 @@ input.download {
 #welcome-message-input {
     width: 50%;
     min-height: 200px;
+    padding: 8px;
 }
 
 .subviews.output table {

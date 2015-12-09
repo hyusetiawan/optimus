@@ -71,7 +71,7 @@ var setupTransformer = function($state){
     var baseURLTheme = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/theme/'
     var $theme = $('#theme')
     $theme.html(themes.join('\n'))
-    var $devFileList = $('#dev-file-list')
+
     var welcomeMessage = null
     var $auto = $('#auto')
     var $welcomeMessageInput = $('#welcome-message-input')
@@ -97,40 +97,36 @@ var setupTransformer = function($state){
     var saveHotkey = hotkeyStart + 'S'
     $('.save-button').attr('title', $('.save-button').attr('title').replace('<hotkey>', saveHotkey))
     $('.run-button').attr('title', $('.run-button').attr('title').replace('<hotkey>', runHotkey))
-    var runTransform = function(idx){PubSub.publish('transformer.run', idx)}
+    var runTransform = function(){
+
+        PubSub.publish('transformer.run')
+    }
     var saveState = function(){PubSub.publish('state.save')}
+    var $setWelcomeMessage = $('#set-welcome-message')
+
     map[runHotkey] = runTransform
-    map[hotkeyStart + 'S'] = saveState
+    map[saveHotkey] = saveState
     editor.addKeyMap(map)
 
     $(document).on('click','.save-button', function(e){
         PubSub.publish('state.save')
     })
+    $(document).on('click','.run-button', runTransform)
 
-    $(document).on('click','.run-button', function(e){
-        runTransform($devFileList.val())
-    })
-
-    PubSub.subscribe('files.set', function(path, files){
-        var options = []
-        for(var i = 0; i < files.length; i++){
-            var file = files[i]
-            options.push(`<option value="${i}">${file.name}</option>`)
+    $setWelcomeMessage.magnificPopup({
+        midClick: true,
+        closeOnBgClick: true,
+        showCloseBtn: false,
+        enableEscapeKey: true,
+        items:{
+            src: '#welcome-message-input',
+            type: 'inline'
         }
-        $devFileList.html(options.join(''))
-    })
-
-    PubSub.subscribe('transformer.run', function(path, idx){
-        if(!idx){
-            alert('Please select a file, and if you have not, also drop some files in Mode > Ready')
-            return
-        }
-
     })
 
     var transformerState = $state.get('transformer', {})
     if(transformerState.transformer) editor.setValue(transformerState.transformer)
-    $auto.val(transformerState.auto?transformerState.auto:'')
+    $auto.val(transformerState.auto?transformerState.auto:'auto')
     $theme.val(transformerState.theme?transformerState.theme: 'monokai')
     $welcomeMessageInput.val(transformerState.welcome)
 
@@ -148,15 +144,13 @@ var setupTransformer = function($state){
 
 $(document).ready(function(){
     UnoPico.ready(function($statev1){
-        var filesaver = setupFileSaver($statev1)
         var transformer = setupTransformer($statev1)
-        setupUpload(filesaver, transformer, $statev1)
+        setupUpload(transformer, $statev1)
         setupRouting()
 
         PubSub.subscribe('state.save', function(){
             $statev1.set({
-                transformer: transformer.capture(),
-                filesaver: filesaver.capture()
+                transformer: transformer.capture()
             })
         })
 

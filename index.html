@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/tooltipster.min.css" rel="stylesheet" type='text/css' />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tooltipster/3.3.0/css/themes/tooltipster-light.min.css" rel="stylesheet" type='text/css' />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.css" type="text/css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.0.0/magnific-popup.min.css" type="text/css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="main.css">
     <title>OPTIMUS</title>
 </head>
@@ -33,36 +34,43 @@
         <form class="upload-file">
             <div class="menu">
                 <input class="clear-files" type="button" value="CLEAR FILES" />
-                <input class="process-all" type="button" value="PROCESS ALL" />
+                <input class="process" type="button" value="PROCESS" />
             </div>
-            <table id="file-list" border="0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Process</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <input id="file-input" type="file" />
-            <label id="file-info"  for="file-input">Click to Upload Files or Drag and Drop Files</label>
+            <div class="processing-mode">
+                <h4>Source Files</h4>
+                <table id="source-files-table" class="file-list" border="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <h4>Results: </h4>
+                <table id="result-files-table" class="file-list"></table>
+            </div>
+
+            <div class="ready-mode">
+                <input id="file-input" type="file" />
+                <label id="file-info" for="file-input">Click to Upload Files or Drag and Drop Files</label>
+                <div id="welcome-message"></div>
+            </div>
         </form>
 
-        <div id="welcome-message"></div>
+
 
     </div>
     <div class="views edit">
         <nav class="sub-level primary_nav_wrap">
             <ul >
                 <li><a href="#/edit/transformer">Transformer</a></li>
-                <li><a href="#/edit/output">Output</a></li>
-                <li><a href="#/edit/extras">Extras</a></li>
+                <li><a href="#/edit/docs">Docs</a></li>
             </ul>
             <form class="dev-form">
-                <input title="saves the app <br />hotkey: <hotkey>" class="save-button" type="button" value="SAVE" />
-                <input title="runs the app against the selected file to the dropdown <br />hotkey: <hotkey>" class="run-button" type="button" value="RUN">
-                <select title="Drop some files in Mode > Ready, they will be available here to test your transformation logic against for debugging purposes" id="dev-file-list"><option> - </option></select>
+                <input title="saves the app <br /><b>hotkey: <hotkey></b>" class="save-button" type="button" value="SAVE" />
+                <input title="runs the transformer() against the uploaded files from <b>Mode > Ready</b> for debugging <br /><b>hotkey: <hotkey></b>" class="run-button" type="button" value="RUN">
+
             </form>
         </nav>
 
@@ -73,13 +81,12 @@
         </div>
         <div class="subviews transformer">
             <div class="padded">
-                <div class="auto-parse">
+                <div class="pill-menu auto-parse">
                     <b>Auto Parse:</b>
                     <select id="auto" title="A convenience method before calling transformer to automatically parses the content of the  file <br />
-                                            and pass it to transformer() as $data parameter so you can focus on transforming the data not parsing<br />
-                                             AUTO: detects csv/json">
-                        <option> - </option>
+                                            and pass it to transformer() as contents parameter. AUTO: detects csv/json/txt">
                         <option value="auto">AUTO</option>
+                        <option value="">NONE</option>
                         <option value="json">JSON</option>
                         <option value="csv">CSV</option>
                         <option value="readAsText">AsText</option>
@@ -89,59 +96,79 @@
                     </select>
                 </div>
 
+                <input id="set-welcome-message" type="button" value="SET WELCOME MESSAGE">
+
                 <label class="editor-theme" title="change the editor's theme">
                     Editor's Theme
                     <select id="theme"></select> <br />
                 </label>
             </div>
 
-            <textarea id="transformer">function transformer(file, send, $data){
-  /**
-    @file   the uploaded file (a File instance)
-    @send   function to send the result: send(result) to send the whole processed data, send(item, index, total) to indicate progress
-            Use send with the counter, if the file is a large array, this will also activate progress indicator and is zero-based index
-            If the file is small (under 100mb), you can send the whole processed data safely.
-    @$data  parsed data, null if you didn't choose the auto parse (see above)
-  */
-
-  var scripts = [
-    'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'
-  ]
-  importScripts.apply(null, scripts) // if you would like to use other libraries
-  var total = $data.length
-  for (var i = 0; i < total; i++){
-    //do some transformation
-    send($data[i], i, total)
+            <textarea id="transformer">function transformer(files, contents){
+  importScripts('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js') // if you would like to use other libraries
+	// an example script that would just create a copy of the given file
+  for(var i = 0; i < contents.length; i++){
+    var file = files[i]
+    var content = contents[i]
+    var r = new Result(file.name) //create a result file, you can create multiple result files
+    r.set(content)
+    //PS: if the data is very large, use append() instead:
+    /**
+    for(var j = 0; j < content.length; j++){
+        _.delay(function(r, content, progress){
+            r.append(content, progress)
+        }, (j + 1)* 500, r, content[j], (j + 1)/content.length ) //delayed for dramatic effects
+    }
+    */
   }
-
-  return $data // return the result
 }</textarea>
         </div>
-        <div class="subviews output">
-            <form class="padded">
-                <table>
-                    <tr>
-                        <td class="input-label">Content Type</td>
-                        <td>
-                            <select id="content-type" name="content-type">
-                                <option value="original">ORIGINAL</option>
-                                <option value="json">JSON</option>
-                                <option value="csv">CSV</option>
-                                <option value="txt">TXT</option>
-                            </select>
-                        </td>
-                    </tr>
 
-                    <tr>
-                        <td class="input-label">Filename Pattern</td>
-                        <td style="">
-                            <input id="filename-pattern" type="text" name="tags" placeholder="" class="tags-input" value="$original"/>
-                            <input id="select-tag" type="text" name="tags" placeholder="Tags" class="tags-input"
-                                   value="$timestamp, $original, $counter, $uuid" />
-                        </td>
-                    </tr>
-                </table>
-            </form>
+        <div class="subviews docs">
+            <h3 class="title">Docs</h3>
+            <p>
+                <h4><i>function transformer(files, contents) {...}</i></h4>
+                Start by defining a function called transformer, the function will be called once and be run in a <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers">Web Worker</a> so it will not block the UI, keeping it responsive.
+                Transformer will have the following parameters:
+                <dl>
+                    <dt>files</dt>
+                    <dd>
+                        The uploaded file(s),  a <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/FileList">FileList</a> instance,
+                        which consists of <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/File">File</a> instance. You can read the File manually if you are not using auto parse, using the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/FileReader">FileReader</a> API
+                    </dd>
+                    <br />
+
+                    <dt>contents</dt>
+                    <dd>
+                        Array of parsed data, empty array [] if you didn't choose to auto parse and for files that cannot be parsed,
+                        will have null as the content. The parsed data matches the file in <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/FileList">FileList</a> by index.
+                    </dd>
+                </dl>
+                <hr />
+                <h4><i>Result</i></h4>
+                <p>
+                    Class to create a new result file for the user to download, it is available inside the transformer function.
+                    <dl>
+                        <dt>new Result(filename, contenttype)</dt>
+                        <dd>
+
+                            Create a result file, it will auto detect the file type based on the file extension, however
+                            you can also force the content type <i>new Result('r.json', 'txt')</i>, it supports 'csv', 'json', 'txt'.
+                            As you create multiple Result instances, it will show on the result table in <b>Mode > Ready</b>
+                        </dd>
+                        <dt>result.append(item, progress)</dt>
+                        <dd>
+                            Appends the data to the result file, only use this with arrays.
+                            This will activate a progress indicator. Use this if the data is a REALLY large array (as in 300MB and above) <br />
+                            To show progress, pass the progress parameter ranging from 0 to 1, as such: result.append(item, i / items.length). Passing the value 1 will automatically close the file.
+                        </dd>
+                        <dt>
+                        <dt>result.set(result)</dt>
+                        <dd>Sets the content of the file at once and then close the file.</dd>
+
+                    </dl>
+                </p>
+            </p>
         </div>
     </div>
 
@@ -183,54 +210,80 @@
 
     </div>
     <script id="worker" type="text/javascript">
-        {{transformer}}
-        var send = function send(){
-            if(arguments.length == 1){
-                postMessage({cmd: 'done', data: arguments[0]})
-            } else {
-                //http://developerblog.redhat.com/2014/05/20/communicating-large-objects-with-web-workers-in-javascript/
-                postMessage({cmd: 'step', data: arguments[0], step: arguments[1], total: arguments[2]})
+        var generateUUID = function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                        .toString(16)
+                        .substring(1)
             }
+
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
         }
+
+        var Result = function(filename, type){
+            if(type) this.type = type
+            else this.type = filename.split('.').pop()
+            this.filename = filename
+            this.id = generateUUID()
+            postMessage({cmd: 'result', id: this.id, filename: this.filename, type: this.type})
+        }
+        Result.prototype.append = function(item, progress){
+            postMessage({cmd: 'append', item: item, progress: progress, id: this.id})
+        }
+
+        Result.prototype.set = function(result){
+            postMessage({cmd: 'set', result: result, id: this.id})
+        }
+
+        {{transformer}}
 
         self.onmessage = function(e){
             var data = e.data
 
             switch(data.cmd){
                 case 'run':
-                    var file = data.file
+                    var files = data.files
                     var options = data.options
-                    var $data = null;
-
                     if (options.auto) {
                         postMessage({cmd: 'info', msg: 'Reading Data'})
-                        var reader = new FileReader()
-                        reader.onload = function(){
-                            var auto = options.auto
-                            if(auto == 'auto'){
-                                if(file.type.indexOf('json') >= 0) auto = 'json'
-                                else if (file.type.indexOf('csv') >= 0) auto = 'csv'
-                                else auto = 'txt'
-                            }
+                        importScripts('https://cdnjs.cloudflare.com/ajax/libs/async/1.5.0/async.min.js')
+                        async.map(files, function(file, done){
+                            var reader = new FileReader()
+                            var content = null
 
-                            switch(auto){
-                                case 'json':
-                                    $data = JSON.parse(reader.result)
-                                    break
-                                case 'csv':
-                                    importScripts(['https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js'])
-                                    $data = Papa.parse(reader.result).data
-                                    break
-                                default:
-                                    $data = reader.result
-                                    break
+                            reader.onload = function(){
+
+                                var auto = options.auto
+                                if(auto == 'auto'){
+                                    if(file.type.indexOf('json') >= 0) auto = 'json'
+                                    else if (file.type.indexOf('csv') >= 0) auto = 'csv'
+                                    else auto = 'txt'
+                                }
+
+                                switch(auto){
+                                    case 'json':
+                                        content = JSON.parse(reader.result)
+                                        break
+                                    case 'csv':
+                                        importScripts('https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js')
+                                        content = Papa.parse(reader.result).data
+                                        break
+                                    default:
+                                        content = reader.result
+                                        break
+                                }
+
+                                done(null, content)
                             }
-                            transformer(file, send, $data)
-                        }
-                        if(reader[options.auto])reader[options.auto](file)
-                        else reader.readAsText(file)
+                            if(reader[options.auto]) reader[options.auto](file)
+                            else reader.readAsText(file)
+
+                        }, function(err, contents){
+                            transformer(files, contents)
+                        })
+
                     } else {
-                        transformer(file, send, $data)
+                        transformer(files, [])
                     }
 
                     break;
@@ -250,6 +303,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/markdown.js/0.5.0/markdown.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/0.7.3/purify.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.0.0/jquery.magnific-popup.min.js"></script>
 
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/addon/edit/closebrackets.min.js"></script>
@@ -259,7 +313,6 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/mode/javascript/javascript.min.js"></script>
 
     <script type="text/javascript" src="setup_upload.js"></script>
-    <script type="text/javascript" src="setup_file_saver.js"></script>
     <script type="text/javascript" src="main.js"></script>
 </body>
 </html>

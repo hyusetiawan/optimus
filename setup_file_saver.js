@@ -89,7 +89,7 @@ var setupFileSaver = function($state){
     }
     var filesaverState = $state.get('filesaver', {})
     window.$filenamePattern = $filenamePattern
-    if (filesaverState.pattern) $filenamePattern.importTags(filesaverState.pattern)
+    if (filesaverState.pattern) $filenamePattern.val(filesaverState.pattern)
     if (filesaverState.content) $contentType.val(filesaverState.content)
 
     return {

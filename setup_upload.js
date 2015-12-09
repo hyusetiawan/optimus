@@ -1,15 +1,45 @@
-var setupUpload = function setupUpload(filesaver, transformer, $state){
+var saveFile = function(result){
+
+    var charset = ';charset=' + document.characterSet
+    var charsets = {
+        json: {type: 'application/json' + charset},
+        txt: {type: 'text/plain' + charset},
+        csv: {type: 'text/csv' + charset}
+    }
+
+    var content = result.content
+    switch(result.type){
+        case 'json':
+            content = JSON.stringify(content, null, 4)
+            break
+        case 'txt':
+            content = String(content)
+            break
+        case 'csv':
+            content = Papa.unparse(content)
+            break
+    }
+    saveAs(new Blob([content], charsets[result.type]), result.filename)
+}
+
+var setupUpload = function setupUpload(transformer, $state){
 
     var $viewReady = $('.views.ready')
     var $fileInfo = $('#file-info')
     var dropMessage = 'DDDROP THE FILES!'
     var originalTxt = $fileInfo.text()
     var $uploadMenu = $('.upload-file > .menu')
-    var $fileList = $('#file-list')
+    var $sourceFilesTable = $('#source-files-table')
+    var $resultFilesTable = $('#result-files-table')
     var files = null
     var $welcomeMessage = $('#welcome-message')
     var ALLOWED_TAGS  = [ 'p', 'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul']
+    var $processingModes = $('.processing-mode')
+    var $readyModes = $('.ready-mode')
+    var worker = null
+
     var setWelcomeMessage = function setWelcomeMessage(msg){
+        if(!msg) msg = ''
         msg = DOMPurify.sanitize(markdown.toHTML(msg), ALLOWED_TAGS)
         $welcomeMessage.html(msg)
         if (!$welcomeMessage.text().trim()){
@@ -30,10 +60,11 @@ var setupUpload = function setupUpload(filesaver, transformer, $state){
         files = null
         $fileInfo.text(originalTxt).show()
         $uploadMenu.css('visibility', 'hidden')
-        $fileList.hide()
+        $processingModes.hide()
+        $readyModes.show()
     })
-    $(document).on('click', '.process-all', function(){
-        $('.process-button').click() //click all that can be clicked
+    $(document).on('click', 'input.process', function(){
+        PubSub.publish('file.process')
     })
 
     var progressSettings = {
@@ -46,75 +77,110 @@ var setupUpload = function setupUpload(filesaver, transformer, $state){
             inst.setText((inst.value() * 100).toFixed(0) + '%');
         }
     }
+    var ResultList = function(){
+        this.results = {}
+    }
+    ResultList.prototype.add = function(r){
 
-    var processFile = function(idx){
-        var file = files[idx]
-        var result = []
+        this.results[r.id] = r
+        if(!$resultFilesTable.data('list')){
+            $resultFilesTable.html(`
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Process</th>
+                </tr>
+                <tbody></tbody>
+            </thead>
+            `).data('list', true)
+        }
+
+        $resultFilesTable.children('tbody').append(`
+            <tr id="${r.id}">
+                <td>${r.filename}</td>
+                <td class="action"> .. </td>
+            </tr>
+        `)
+        this.results[r.id].elem = $('#' + r.id)
+    }
+    ResultList.prototype.append = function append(id, item, progress){
+        var r = this.results[id]
+        var $elem = r.elem
+        var $action = $elem.children('.action')
+        var $progress = r.progress
+        var self = this
+        if(!$progress){
+            $action.empty()
+            $progress = r.progress = new ProgressBar.Line($action[0], progressSettings)
+            r.content = []
+        }
+
+        r.content.push(item)
+        $progress.animate(progress)
+        if(progress >= 1) {
+            setTimeout(function(){
+                self.finish(id)
+            }, 300)
+        }
+    }
+
+    ResultList.prototype.set = function(id, content){
+        this.results[id].content = content
+        this.finish(id)
+    }
+
+    ResultList.prototype.finish = function(id){
+        var r = this.results[id]
+        var $button = $(`<input class="download" type="button" value="DOWNLOAD" />`)
+        r.elem.children('.action').html($button)
+        $button.click(function(){
+            saveFile(r)
+        })
+    }
+
+    var process = function process(){
+
         var transformerState = transformer.capture()
-        var fileSaverState = filesaver.capture()
         var workerScript = $('#worker').text().trim().replace('{{transformer}}', transformerState.transformer)
         var blob = new Blob([workerScript])
-        var worker = new Worker(window.URL.createObjectURL(blob));
-        var $process = $('#file-' + idx + ' > .process')
-        var progress = null
-        var done = function(result){
-            if(fileSaverState.autosave) {
-                filesaver.saveFile(file, result)
-            } else {
-                var $button = $(`<input class="download" type="button" value="DOWNLOAD" />`)
-                $process.empty().append($button)
-                $button.click(function(){
-                    filesaver.saveFile(file, result)
-                })
-            }
+        if(worker) worker.terminate()
+        var rl = new ResultList()
+        worker  = window.worker = new Worker(window.URL.createObjectURL(blob));
+        worker.onerror = function(e){
+            console.error(e)
         }
 
         worker.onmessage = function(e) {
             var data = e.data
             switch(data.cmd) {
-                case 'step':
-                    result.push(data.data)
-                    var step = data.step + 1
-                    if(step == 1){ //create the process
-                        var $cont = $('<div class="progress"></div>')
-                        $process.empty().append($cont)
-                        progress = new ProgressBar.Line($cont[0], progressSettings)
-                    } else if (step < data.total) { //indicate progress
-                        progress.animate(data.step/data.total)
-                    } else { //done
-                        console.log('DONE: ', data, result)
-                        progress.animate(data.step/data.total)
-                        done(result)
-                    }
+                case 'append':
+                    rl.append(data.id, data.item, data.progress)
                     break
-                case 'info':
-                    $process.text(data.msg)
+                case 'set': //full on result
+                    rl.set(data.id, data.result)
                     break
-                case 'done':
-                    done(data.result)
+                case 'result'://a new result is created
+                    rl.add({
+                        id: data.id,
+                        filename: data.filename,
+                        type: data.type
+                    })
                     break
             }
 
         }
-        worker.postMessage({cmd: 'run', file: file, options: {
+        worker.postMessage({cmd: 'run', files: files, options: {
             auto: transformerState.auto
         }})
     }
 
-    $(document).on('click', '.process-button', function(){
-        var idx = $(this).data('idx')
-        PubSub.publish('file.process', idx)
-    })
-
-    var createProcessButton = function(idx){
-        return `<input data-idx="${idx}" class="process-button" type="button" value="PROCESS" />`
-    }
     var setFiles = function setFiles(uploadedFiles){
         files = uploadedFiles
         PubSub.publish('files.set', files)
         $uploadMenu.css('visibility', 'visible')
-        $fileInfo.hide()
-        $fileList.show()
+        $processingModes.show()
+        $readyModes.hide()
+        $resultFilesTable.html('No results yet.')
         var tmpls = []
         for(var i = 0; i < files.length; i++){
             var file = files[i]
@@ -123,13 +189,10 @@ var setupUpload = function setupUpload(filesaver, transformer, $state){
                 <tr id="file-${i}">
                     <td>${file.name}</td>
                     <td>${byteCount(file.size)}</td>
-                    <td class="process">
-                        ${createProcessButton(i)}
-                    </td>
                 </tr>
             `)
         }
-        $fileList.children('tbody').html(tmpls.join(' '))
+        $sourceFilesTable.children('tbody').html(tmpls.join(' '))
     }
 
     //setFiles([{name: 'first.json', size: 130}, {name: 'second.json', size: 4400}])
@@ -147,8 +210,8 @@ var setupUpload = function setupUpload(filesaver, transformer, $state){
         setFiles(files)
     })
 
-    PubSub.subscribe('file.process', function(path, idx){
-        processFile(idx)
+    PubSub.subscribe('transformer.run', function(path){
+        process()
     })
 
     PubSub.subscribe('file.welcome', function(path, welcomeMessage){

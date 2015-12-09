@@ -171,8 +171,11 @@ input.download {
 }
 /*-------------------------------------------------------------------------------------------------------------*/
 #welcome-message {
+    border: 2px solid gray;
     margin: 0 auto;
+    padding: 0px 8px;
     border-radius: 8px;
+    margin-top: 15px;
     width: 40%;
 }
 

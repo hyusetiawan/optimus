@@ -47,7 +47,7 @@ body {
 .views.edit {
     padding-top: 10px;
 }
-.page-level.primary_nav_wrap * {
+.page-level.primary-nav-wrap * {
     z-index: 10;
 }
 .cleared {
@@ -237,11 +237,11 @@ input.download {
 }
 
 /*-------------------------------------------------------------------------------------------------------------*/
-.primary_nav_wrap {
+.primary-nav-wrap {
     margin-top:15px
 }
 
-.primary_nav_wrap ul {
+.primary-nav-wrap ul {
     list-style:none;
     position:relative;
     float:left;
@@ -249,7 +249,7 @@ input.download {
     padding:0
 }
 
-.primary_nav_wrap ul a {
+.primary-nav-wrap ul a {
     display:block;
     color:#333;
     text-decoration:none;
@@ -260,22 +260,22 @@ input.download {
     font-family:"HelveticaNeue","Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
-.primary_nav_wrap ul li {
+.primary-nav-wrap ul li {
     position:relative;
     float:left;
     margin:0;
     padding:0
 }
 
-.primary_nav_wrap ul li.current-menu-item {
+.primary-nav-wrap ul li.current-menu-item {
     background:#ddd
 }
 
-.primary_nav_wrap ul li:hover {
+.primary-nav-wrap ul li:hover {
     background:#f6f6f6
 }
 
-.primary_nav_wrap ul ul {
+.primary-nav-wrap ul ul {
     display:none;
     position:absolute;
     top:100%;
@@ -284,21 +284,21 @@ input.download {
     padding:0
 }
 
-.primary_nav_wrap ul ul li {
+.primary-nav-wrap ul ul li {
     float:none;
     width:200px
 }
 
-.primary_nav_wrap ul ul a {
+.primary-nav-wrap ul ul a {
     line-height:120%;
     padding:10px 15px
 }
 
-.primary_nav_wrap ul ul ul {
+.primary-nav-wrap ul ul ul {
     top:0;
     left:100%
 }
 
-.primary_nav_wrap ul li:hover > ul {
+.primary-nav-wrap ul li:hover > ul {
     display:block
 }

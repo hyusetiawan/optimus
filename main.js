@@ -1,4 +1,4 @@
-var setupRouting = function setupRouting(){
+var setupRouting = function setupRouting($state){
     var selectedClass = 'current-menu-item'
     var onEnter = function onEnter(){
         var view = window.location.hash.split('#')[1].split('/')
@@ -46,13 +46,18 @@ var setupRouting = function setupRouting(){
         //console.log('welcome to help')
     }).enter(onEnter)
 
-    Path.root('#/about')
     $('[title]').tooltipster({
         theme: 'tooltipster-light',
         contentAsHTML: true,
         delay: 300
     });
     Path.listen()
+    if($state.get('transformer.transformer')){
+        window.location.hash = '#/ready'
+    } else {
+        window.location.hash = '#/about'
+    }
+
 }
 var setupTransformer = function($state){
     var themes = ["default", "3024-day", "3024-night", "abcdef", "ambiance", "base16-dark", "base16-light", "bespin", "blackboard", "cobalt", "colorforth", "dracula", "eclipse", "elegant", "erlang-dark", "hopscotch", "icecoder", "isotope", "lesser-dark", "liquibyte", "material", "mbo", "mdn-like", "midnight", "monokai", "neat", "neo", "night", "paraiso-dark", "paraiso-light", "pastel-on-dark", "railscasts", "rubyblue", "seti", "solarized", "the-matrix", "tomorrow-night-bright", "tomorrow-night-eighties", "ttcn", "twilight", "vibrant-ink", "xq-dark", "xq-light", "yeti", "zenburn"]
@@ -167,7 +172,7 @@ $(document).ready(function(){
     UnoPico.ready(function($statev1){
         var transformer = setupTransformer($statev1)
         setupUpload(transformer, $statev1)
-        setupRouting()
+        setupRouting($statev1)
 
         PubSub.subscribe('state.save', function(){
             $statev1.set({

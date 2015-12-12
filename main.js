@@ -24,9 +24,10 @@ var setupRouting = function setupRouting(){
 
 
     Path.map("#/edit(/:sub)").to(function(){
-        //switch(this.params['sub']){
-        //
-        //}
+        if(!this.params.sub){
+            window.location.hash = '/edit/transformer'
+            return false
+        }
     }).enter(onEnter)
 
     Path.map("#/ready").to(function(){

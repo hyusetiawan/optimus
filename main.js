@@ -127,6 +127,26 @@ var setupTransformer = function($state){
 
     var transformerState = $state.get('transformer', {})
     if(transformerState.transformer) editor.setValue(transformerState.transformer)
+    else {
+        editor.setValue(`function transformer(files, contents){
+  importScripts('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js') // if you would like to use other libraries
+	// an example script that would just create a copy of the given file
+  for(var i = 0; i < contents.length; i++){
+    var file = files[i]
+    var content = contents[i]
+    var r = new Result(file.name) //create a result file, you can create multiple result files
+    r.set(content)
+    //PS: if the data is very large, use append() instead:
+    /**
+    for(var j = 0; j < content.length; j++){
+        _.delay(function(r, content, progress){
+            r.append(content, progress)
+        }, (j + 1)* 500, r, content[j], (j + 1)/content.length ) //delayed for dramatic effects
+    }
+    */
+  }
+}`)
+    }
     $auto.val(transformerState.auto?transformerState.auto:'auto')
     $theme.val(transformerState.theme?transformerState.theme: 'monokai')
     $welcomeMessageInput.val(transformerState.welcome)

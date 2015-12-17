@@ -4,7 +4,6 @@ var setupRouting = function setupRouting($state){
         var view = window.location.hash.split('#')[1].split('/')
         var mainView = view[1]
         var subView = view[2]
-        //console.log('VIEW: ', mainView, subView)
         $('.page-level .' + selectedClass).removeClass(selectedClass)
         $('.page-level a[href="#/'+mainView+'"]').closest('li').addClass(selectedClass)
 
@@ -105,7 +104,9 @@ var setupTransformer = function($state){
     $('.run-button').attr('title', $('.run-button').attr('title').replace('<hotkey>', runHotkey))
     var runTransform = function(){
 
-        PubSub.publish('transformer.run')
+        PubSub.publish('transformer.run', {
+            debug: true
+        })
     }
     var saveState = function(){PubSub.publish('state.save')}
     var $setWelcomeMessage = $('#set-welcome-message')

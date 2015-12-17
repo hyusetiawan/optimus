@@ -64,7 +64,9 @@ var setupUpload = function setupUpload(transformer, $state){
         $readyModes.show()
     })
     $(document).on('click', 'input.process', function(){
-        PubSub.publish('file.process')
+        PubSub.publish('transformer.run', {
+            debug: false
+        })
     })
 
     var progressSettings = {
@@ -83,6 +85,8 @@ var setupUpload = function setupUpload(transformer, $state){
     ResultList.prototype.add = function(r){
 
         this.results[r.id] = r
+        if(r.debug) return //no need to create table below
+
         if(!$resultFilesTable.data('list')){
             $resultFilesTable.html(`
             <thead>
@@ -105,23 +109,29 @@ var setupUpload = function setupUpload(transformer, $state){
     }
     ResultList.prototype.append = function append(id, item, progress){
         var r = this.results[id]
-        var $elem = r.elem
-        var $action = $elem.children('.action')
-        var $progress = r.progress
-        var self = this
-        if(!$progress){
-            $action.empty()
-            $progress = r.progress = new ProgressBar.Line($action[0], progressSettings)
-            r.content = []
+        r.content = r.content?r.content:[]
+        r.content.push(item)
+        if(!r.debug) {
+            var $elem = r.elem
+            var $action = $elem.children('.action')
+            var $progress = r.progress
+            var self = this
+            if (!$progress) {
+                $action.empty()
+                $progress = r.progress = new ProgressBar.Line($action[0], progressSettings)
+            }
+            $progress.animate(progress)
+            if(progress >= 1){
+                setTimeout(function(){
+                    self.finish(id)
+                }, 300)
+            }
+        } else {
+            if(progress >= 1) {
+                self.finish(id)
+            }
         }
 
-        r.content.push(item)
-        $progress.animate(progress)
-        if(progress >= 1) {
-            setTimeout(function(){
-                self.finish(id)
-            }, 300)
-        }
     }
 
     ResultList.prototype.set = function(id, content){
@@ -131,6 +141,10 @@ var setupUpload = function setupUpload(transformer, $state){
 
     ResultList.prototype.finish = function(id){
         var r = this.results[id]
+        if(r.debug){
+            console.log('RESULT:', r.content)
+            return
+        }
         var $button = $(`<input class="download" type="button" value="DOWNLOAD" />`)
         r.elem.children('.action').html($button)
         $button.click(function(){
@@ -138,8 +152,14 @@ var setupUpload = function setupUpload(transformer, $state){
         })
     }
 
-    var process = function process(){
-
+    var process = function process(opts){
+        opts = opts || {}
+        if(!files){
+            if(opts.debug){
+                console.warn('You are running the transformation without uploading a file, please go to Mode > Ready and drop a file you want to test against and try again')
+            }
+            return
+        }
         var transformerState = transformer.capture()
         var workerScript = $('#worker').text().trim().replace('{{transformer}}', transformerState.transformer)
         var blob = new Blob([workerScript])
@@ -163,7 +183,8 @@ var setupUpload = function setupUpload(transformer, $state){
                     rl.add({
                         id: data.id,
                         filename: data.filename,
-                        type: data.type
+                        type: data.type,
+                        debug: opts.debug
                     })
                     break
             }
@@ -210,8 +231,8 @@ var setupUpload = function setupUpload(transformer, $state){
         setFiles(files)
     })
 
-    PubSub.subscribe('transformer.run', function(path){
-        process()
+    PubSub.subscribe('transformer.run', function(path, opts){
+        process(opts)
     })
 
     PubSub.subscribe('file.welcome', function(path, welcomeMessage){
